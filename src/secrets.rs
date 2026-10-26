@@ -1,4 +1,3 @@
-// Open choice: keychain plus environment secrets; the alternative is keychain only.
 use crate::{Error, failure};
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -15,7 +14,6 @@ struct Configuration {
 #[derive(Deserialize)]
 #[serde(tag = "source", rename_all = "kebab-case", deny_unknown_fields)]
 pub(crate) enum SecretSource {
-    Environment { url_env: String, token_env: String },
     Keychain { service: String, account: String },
 }
 
@@ -51,11 +49,6 @@ pub(crate) fn configured_source(name: &str) -> Result<SecretSource, Error> {
 impl SecretSource {
     pub(crate) fn resolve(self) -> Result<Credentials, Error> {
         match self {
-            Self::Environment { url_env, token_env } => Ok(Credentials {
-                url: std::env::var(url_env).map_err(|_| failure("webhook URL is unavailable"))?,
-                token: std::env::var(token_env)
-                    .map_err(|_| failure("webhook token is unavailable"))?,
-            }),
             Self::Keychain { service, account } => keychain(&service, &account),
         }
     }

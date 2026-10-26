@@ -41,13 +41,24 @@ pub(crate) fn run(args: SessionEndArgs) -> Result<(), Error> {
         .to_str()
         .ok_or_else(|| failure("invalid webhook name"))?;
     let source = crate::secrets::configured_source(name)?;
-    let payload = payload(args)?;
-    let credentials = source.resolve()?;
+    deliver(args, std::io::stdin(), || source.resolve())
+}
+
+fn deliver(
+    args: SessionEndArgs,
+    input: impl Read,
+    credentials: impl FnOnce() -> Result<crate::secrets::Credentials, Error>,
+) -> Result<(), Error> {
+    let payload = payload(args, input)?;
+    let credentials = credentials()?;
     let request = payload.encode(&credentials.token)?;
     crate::http_client::send(&credentials.url, &request)
 }
 
-fn payload(args: SessionEndArgs) -> Result<crate::webhook_format::Payload, Error> {
+fn payload(
+    args: SessionEndArgs,
+    input: impl Read,
+) -> Result<crate::webhook_format::Payload, Error> {
     let (worktree, event) = match args.source {
         Source::Herdr => {
             if args.notification.is_some() {
@@ -78,7 +89,7 @@ fn payload(args: SessionEndArgs) -> Result<crate::webhook_format::Payload, Error
                 serde_json::from_str(&input).map_err(|_| failure("invalid hook input"))?
             } else {
                 NativeEvent::deserialize(&mut serde_json::Deserializer::from_reader(
-                    std::io::stdin().take(1_048_576),
+                    input.take(1_048_576),
                 ))
                 .map_err(|_| failure("invalid hook input"))?
             };
@@ -97,3 +108,6 @@ fn payload(args: SessionEndArgs) -> Result<crate::webhook_format::Payload, Error
     };
     crate::webhook_format::Payload::new(crate::worktree::resolve(worktree)?, event)
 }
+
+#[cfg(test)]
+mod tests;

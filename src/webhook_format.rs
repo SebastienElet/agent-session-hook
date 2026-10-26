@@ -1,4 +1,4 @@
-// Open choice: Bearer auth and JSON {worktree, event, time}; an alternative is a receiver-specific format.
+// Bearer + JSON {worktree, event, time}: verify this format at the first real webhook test.
 use crate::{Error, failure};
 use serde::Serialize;
 use std::path::PathBuf;
