@@ -7,7 +7,7 @@ license = "BSD-2-Clause"
 repository = "https://github.com/SebastienElet/agent-session-hook"
 
 [dependencies]
-clap = { version = "=4.6.7", features = ["derive"] }
+clap = { version = "=4.6.9", features = ["derive"] }
 ureq = { version = "=3.5.2", default-features = false, features = ["rustls"] }
 rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
 serde = { version = "=1.0.229", features = ["derive"] }
